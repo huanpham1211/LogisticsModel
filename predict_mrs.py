@@ -26,7 +26,7 @@ def prepare_data(data):
 
     return X, continuous_vars, data_encoded.columns
 
-# Simulate a trained logistic regression model (for demonstration purposes, we can refit the model)
+# Train the model
 def train_model(data):
     X, continuous_vars, training_columns = prepare_data(data)
     y = data['MRS90DAY'].apply(lambda x: 1 if x < 3 else 0)  # 1 = Good (0-2), 0 = Bad (3-6)
