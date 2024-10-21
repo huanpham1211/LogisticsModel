@@ -21,7 +21,7 @@ def prepare_data(data):
     # Impute missing values in continuous variables
     data[continuous_vars] = data[continuous_vars].fillna(data[continuous_vars].mean())
 
-    # Combine with continuous variables
+    # Combine categorical and continuous variables
     X = pd.concat([data_encoded, data[continuous_vars]], axis=1)
 
     return X, continuous_vars, data_encoded.columns
@@ -87,23 +87,19 @@ if uploaded_file is not None:
             'TOAST': [toast]
         })
 
+        # Standardize the continuous variables using the same scaler
+        input_data[continuous_vars] = scaler.transform(input_data[continuous_vars])
+
         # One-hot encode the categorical variables in the input
         input_encoded = pd.get_dummies(input_data, drop_first=True)
 
         # Align the input data with the training columns
         input_encoded = input_encoded.reindex(columns=training_columns, fill_value=0)
 
-        # Debugging: Print out the columns to check for any missing columns
-        st.write("Columns in input_encoded:")
-        st.write(input_encoded.columns)
-
-        # Ensure all continuous variables exist in input_encoded
+        # Ensure continuous variables exist in the input_encoded after processing
         missing_cont_vars = [var for var in continuous_vars if var not in input_encoded.columns]
         if missing_cont_vars:
             st.error(f"Missing continuous variables in the input data: {missing_cont_vars}")
-
-        # Standardize continuous variables using the previously fitted scaler
-        input_encoded[continuous_vars] = scaler.transform(input_encoded[continuous_vars])
 
         # Predict probability
         predicted_prob = logit_model.predict(input_encoded)[0]
