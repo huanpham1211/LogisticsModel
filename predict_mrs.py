@@ -38,8 +38,8 @@ def train_model(data):
     # Fit the logistic regression model
     logit_model = sm.Logit(y, X).fit()
 
-    # Return both the model and the fitted scaler
-    return logit_model, scaler
+    # Return both the model, fitted scaler, and continuous_vars
+    return logit_model, scaler, continuous_vars
 
 # Streamlit App
 st.title("MRS Prediction Tool")
@@ -52,7 +52,7 @@ if uploaded_file is not None:
     data = load_data(uploaded_file)
     if data is not None:
         # Train the model with the uploaded data
-        logit_model, scaler = train_model(data)
+        logit_model, scaler, continuous_vars = train_model(data)
 
         # Input fields for user inputs
         tuoi = st.number_input('Age (TUOI)', min_value=0, max_value=120, value=65)
