@@ -93,6 +93,15 @@ if uploaded_file is not None:
         # Align the input data with the training columns
         input_encoded = input_encoded.reindex(columns=training_columns, fill_value=0)
 
+        # Debugging: Print out the columns to check for any missing columns
+        st.write("Columns in input_encoded:")
+        st.write(input_encoded.columns)
+
+        # Ensure all continuous variables exist in input_encoded
+        missing_cont_vars = [var for var in continuous_vars if var not in input_encoded.columns]
+        if missing_cont_vars:
+            st.error(f"Missing continuous variables in the input data: {missing_cont_vars}")
+
         # Standardize continuous variables using the previously fitted scaler
         input_encoded[continuous_vars] = scaler.transform(input_encoded[continuous_vars])
 
