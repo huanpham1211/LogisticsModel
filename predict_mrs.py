@@ -24,22 +24,21 @@ def prepare_data(data):
     # Combine with continuous variables
     X = pd.concat([data_encoded, data[continuous_vars]], axis=1)
 
-    return X, continuous_vars
+    return X, continuous_vars, data_encoded.columns
 
-# Simulate a trained logistic regression model
+# Simulate a trained logistic regression model (for demonstration purposes, we can refit the model)
 def train_model(data):
-    X, continuous_vars = prepare_data(data)
+    X, continuous_vars, training_columns = prepare_data(data)
     y = data['MRS90DAY'].apply(lambda x: 1 if x < 3 else 0)  # 1 = Good (0-2), 0 = Bad (3-6)
     
     # Fit the RobustScaler on training data
     scaler = RobustScaler()
     X[continuous_vars] = scaler.fit_transform(X[continuous_vars])
 
-    # Fit the logistic regression model
     logit_model = sm.Logit(y, X).fit()
 
-    # Return both the model, fitted scaler, and continuous_vars
-    return logit_model, scaler, continuous_vars
+    # Return both the model, fitted scaler, and training column names
+    return logit_model, scaler, continuous_vars, training_columns
 
 # Streamlit App
 st.title("MRS Prediction Tool")
@@ -52,7 +51,7 @@ if uploaded_file is not None:
     data = load_data(uploaded_file)
     if data is not None:
         # Train the model with the uploaded data
-        logit_model, scaler, continuous_vars = train_model(data)
+        logit_model, scaler, continuous_vars, training_columns = train_model(data)
 
         # Input fields for user inputs
         tuoi = st.number_input('Age (TUOI)', min_value=0, max_value=120, value=65)
@@ -88,11 +87,17 @@ if uploaded_file is not None:
             'TOAST': [toast]
         })
 
+        # One-hot encode the categorical variables in the input
+        input_encoded = pd.get_dummies(input_data, drop_first=True)
+
+        # Align the input data with the training columns
+        input_encoded = input_encoded.reindex(columns=training_columns, fill_value=0)
+
         # Standardize continuous variables using the previously fitted scaler
-        input_data[continuous_vars] = scaler.transform(input_data[continuous_vars])
+        input_encoded[continuous_vars] = scaler.transform(input_encoded[continuous_vars])
 
         # Predict probability
-        predicted_prob = logit_model.predict(input_data)[0]
+        predicted_prob = logit_model.predict(input_encoded)[0]
 
         st.write(f"Predicted Probability of a Good MRS Outcome (0-2): {predicted_prob:.2f}")
 else:
