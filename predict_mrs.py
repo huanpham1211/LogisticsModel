@@ -31,12 +31,31 @@ def prepare_data(data):
     return X
 
 # Simulate a trained logistic regression model (for demonstration purposes, we can refit the model)
-def train_model(data):
+# Simulate a trained logistic regression model (for demonstration purposes, we can refit the model)
+def train_model():
+    data = load_data()
     X = prepare_data(data)
     y = data['MRS90DAY'].apply(lambda x: 1 if x < 3 else 0)  # 1 = Good (0-2), 0 = Bad (3-6)
     
+    # Fit the RobustScaler on training data
+    scaler = RobustScaler()
+    X[continuous_vars] = scaler.fit_transform(X[continuous_vars])
+
     logit_model = sm.Logit(y, X).fit()
-    return logit_model
+
+    # Save the fitted scaler for future use
+    return logit_model, scaler
+
+# Train the model and get the fitted scaler
+logit_model, scaler = train_model()
+
+# Standardize continuous variables using the previously fitted scaler
+input_data[continuous_vars] = scaler.transform(input_data[continuous_vars])
+
+# Predict probability
+predicted_prob = logit_model.predict(input_data)[0]
+
+st.write(f"Predicted Probability of a Good MRS Outcome (0-2): {predicted_prob:.2f}")
 
 # Streamlit App
 st.title("MRS Prediction Tool")
